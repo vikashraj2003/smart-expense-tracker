@@ -31,3 +31,21 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Generated build output
+target/
+bin/
+build/
+dist/
+
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS-generated files
+.DS_Store
+Thumbs.db
