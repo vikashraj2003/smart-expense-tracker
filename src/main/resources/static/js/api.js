@@ -1,136 +1,98 @@
-const API_BASE_URL = "/api/v1";
+"use strict";
 
-async function getTransactions() {
-  const response = await fetch(`${API_BASE_URL}/transactions`);
+window.ExpenseApi = {
+  accessToken: sessionStorage.getItem("accessToken"),
 
-  if (!response.ok) {
-    throw new Error(`Failed to load transactions: ${response.status}`);
-  }
+  async request(path, options = {}) {
+    const headers = { ...options.headers };
 
-  return response.json();
-}
+    if (options.body) {
+      headers["Content-Type"] = "application/json";
+    }
 
-async function createTransaction(transaction) {
-  const response = await fetch(`${API_BASE_URL}/transactions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(transaction),
-  });
+    if (this.accessToken) {
+      headers["Authorization"] = `Bearer ${this.accessToken}`;
+    }
 
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(
-      `Failed to create transaction (${response.status}): ${message}`,
-    );
-  }
+    const response = await fetch(path, { ...options, headers });
 
-  // Some APIs return 201 with no response body.
-  if (response.status === 204) {
-    return null;
-  }
+    if (response.status === 204) return null;
 
-  const contentType = response.headers.get("content-type") || "";
-  return contentType.includes("application/json") ? response.json() : null;
-}
+    const text = await response.text();
+    let data = null;
 
-async function updateTransaction(id, transaction) {
-  const response = await fetch(
-    `${API_BASE_URL}/transactions/${encodeURIComponent(id)}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = text;
+      }
+    }
+
+    if (!response.ok) {
+      const error = new Error(
+        data?.detail ||
+          data?.message ||
+          data?.error ||
+          `Request failed: HTTP ${response.status}`,
+      );
+
+      error.status = response.status;
+
+      if (response.status === 401) {
+        this.logout();
+      }
+
+      throw error;
+    }
+
+    return data;
+  },
+
+  async register(user) {
+    return this.request("/api/v1/auth/register", {
+      method: "POST",
+      body: JSON.stringify(user),
+    });
+  },
+
+  async login(credentials) {
+    const result = await this.request("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    });
+
+    this.accessToken = result.accessToken;
+    sessionStorage.setItem("accessToken", result.accessToken);
+    return result;
+  },
+
+  logout() {
+    this.accessToken = null;
+    sessionStorage.removeItem("accessToken");
+  },
+
+  getTransactions() {
+    return this.request("/api/v1/transactions");
+  },
+
+  createTransaction(transaction) {
+    return this.request("/api/v1/transactions", {
+      method: "POST",
       body: JSON.stringify(transaction),
-    },
-  );
+    });
+  },
 
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(
-      `Failed to update transaction (${response.status}): ${message}`,
-    );
-  }
+  updateTransaction(id, transaction) {
+    return this.request(`/api/v1/transactions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(transaction),
+    });
+  },
 
-  if (response.status === 204) {
-    return null;
-  }
-
-  const contentType = response.headers.get("content-type") || "";
-  return contentType.includes("application/json") ? response.json() : null;
-}
-
-async function deleteTransaction(id) {
-  const response = await fetch(
-    `${API_BASE_URL}/transactions/${encodeURIComponent(id)}`,
-    { method: "DELETE" },
-  );
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(
-      `Failed to delete transaction (${response.status}): ${message}`,
-    );
-  }
-}
-// const API_BASE_URL = "/api/v1";
-
-// async function getTransactions() {
-//   const response = await fetch(`${API_BASE_URL}/transactions`);
-
-//   if (!response.ok) {
-//     throw new Error(`Failed to load transactions: ${response.status}`);
-//   }
-
-//   return await response.json();
-// }
-
-// async function createTransaction(transaction) {
-//   const response = await fetch(`${API_BASE_URL}/transactions`, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify(transaction),
-//   });
-
-//   if (!response.ok) {
-//     const errorText = await response.text();
-//     throw new Error(
-//       `Failed to save transaction (${response.status}): ${errorText}`,
-//     );
-//   }
-
-//   return await response.json();
-// }
-
-// async function deleteTransaction(id) {
-//   const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
-//     method: "DELETE",
-//   });
-
-//   if (!response.ok) {
-//     throw new Error(`Failed to delete transaction: ${response.status}`);
-//   }
-// }
-
-// async function updateTransaction(id, transaction) {
-//   const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
-//     method: "PUT",
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify(transaction),
-//   });
-
-//   if (!response.ok) {
-//     const errorText = await response.text();
-//     throw new Error(
-//       `Failed to update transaction (${response.status}): ${errorText}`,
-//     );
-//   }
-
-//   return await response.json();
-// }
+  deleteTransaction(id) {
+    return this.request(`/api/v1/transactions/${id}`, {
+      method: "DELETE",
+    });
+  },
+};

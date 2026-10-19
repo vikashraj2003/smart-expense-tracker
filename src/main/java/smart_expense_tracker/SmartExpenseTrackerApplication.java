@@ -1,3 +1,4 @@
+
 package smart_expense_tracker;
 
 import org.springframework.boot.SpringApplication;
@@ -8,6 +9,6 @@ public class SmartExpenseTrackerApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(
-            SmartExpenseTrackerApplication.class, args);
+                SmartExpenseTrackerApplication.class, args);
     }
 }

@@ -1,76 +1,66 @@
 
 package smart_expense_tracker.service;
 
-import java.util.List;
+import smart_expense_tracker.dto.TransactionRequest;
+import smart_expense_tracker.dto.TransactionResponse;
+import smart_expense_tracker.entity.AppUser;
+import smart_expense_tracker.entity.Transaction;
+import smart_expense_tracker.repository.TransactionRepository;
+import smart_expense_tracker.repository.UserRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import smart_expense_tracker.dto.TransactionRequest;
-import smart_expense_tracker.dto.TransactionResponse;
-import smart_expense_tracker.entity.Transaction;
-import smart_expense_tracker.repository.TransactionRepository;
+import java.util.List;
 
 @Service
 public class TransactionService {
 
-    private final TransactionRepository repository;
+    private final TransactionRepository transactions;
+    private final UserRepository users;
 
-    public TransactionService(TransactionRepository repository) {
-        this.repository = repository;
+    public TransactionService(
+            TransactionRepository transactions,
+            UserRepository users) {
+        this.transactions = transactions;
+        this.users = users;
     }
 
-    // READ: Get all transactions
     @Transactional(readOnly = true)
-    public List<TransactionResponse> getAllTransactions() {
-        return repository.findAll()
+    public List<TransactionResponse> getAllTransactions(String email) {
+        return transactions.findAllByOwnerEmailIgnoreCase(email)
                 .stream()
                 .map(this::toResponse)
                 .toList();
     }
 
-    // CREATE: Save a new transaction
     @Transactional
     public TransactionResponse createTransaction(
-            TransactionRequest request) {
+            TransactionRequest request, String email) {
+
+        AppUser owner = users.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "User not found"));
 
         Transaction transaction = new Transaction(
                 request.type(),
                 request.amount(),
                 request.currency(),
                 request.description(),
-                request.transactionDate()
-        );
+                request.transactionDate());
 
-        Transaction saved = repository.save(transaction);
+        transaction.setOwner(owner);
 
-        return toResponse(saved);
+        return toResponse(transactions.save(transaction));
     }
 
-    // READ: Get one transaction by ID
-    @Transactional(readOnly = true)
-    public TransactionResponse getTransactionById(Long id) {
-
-        Transaction transaction = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Transaction not found"));
-
-        return toResponse(transaction);
-    }
-
-    // UPDATE: Update an existing transaction
     @Transactional
     public TransactionResponse updateTransaction(
-            Long id,
-            TransactionRequest request) {
+            Long id, TransactionRequest request, String email) {
 
-        Transaction transaction = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Transaction not found"));
+        Transaction transaction = findOwnedTransaction(id, email);
 
         transaction.setType(request.type());
         transaction.setAmount(request.amount());
@@ -78,34 +68,28 @@ public class TransactionService {
         transaction.setDescription(request.description());
         transaction.setTransactionDate(request.transactionDate());
 
-        Transaction updated = repository.save(transaction);
-
-        return toResponse(updated);
+        return toResponse(transactions.save(transaction));
     }
 
-    // DELETE: Delete a transaction by ID
     @Transactional
-    public void deleteTransaction(Long id) {
-
-        if (!repository.existsById(id)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Transaction not found");
-        }
-
-        repository.deleteById(id);
+    public void deleteTransaction(Long id, String email) {
+        Transaction transaction = findOwnedTransaction(id, email);
+        transactions.delete(transaction);
     }
 
-    // Convert the database entity into an API response
-    private TransactionResponse toResponse(Transaction transaction) {
+    private Transaction findOwnedTransaction(Long id, String email) {
+        return transactions.findByIdAndOwnerEmailIgnoreCase(id, email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Transaction not found"));
+    }
 
+    private TransactionResponse toResponse(Transaction transaction) {
         return new TransactionResponse(
                 transaction.getId(),
                 transaction.getType(),
                 transaction.getAmount(),
                 transaction.getCurrency(),
                 transaction.getDescription(),
-                transaction.getTransactionDate()
-        );
+                transaction.getTransactionDate());
     }
 }

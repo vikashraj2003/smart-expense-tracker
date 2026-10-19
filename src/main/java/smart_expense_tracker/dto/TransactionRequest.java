@@ -1,23 +1,18 @@
 
 package smart_expense_tracker.dto;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record TransactionRequest(
-
     @NotBlank
     @Pattern(regexp = "INCOME|EXPENSE")
     String type,
 
     @NotNull
-    @DecimalMin("0.01")
+    @DecimalMin(value = "0.01")
+    @Digits(integer = 10, fraction = 2)
     BigDecimal amount,
 
     @NotBlank
@@ -25,10 +20,10 @@ public record TransactionRequest(
     String currency,
 
     @NotBlank
-    @Size(max = 200)
+    @Size(max = 255)
     String description,
 
     @NotNull
+    @PastOrPresent
     LocalDate transactionDate
-
 ) {}

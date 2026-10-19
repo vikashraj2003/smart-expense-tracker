@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login | Smart Expense Tracker</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <script src="/js/api.js" defer></script>
+    <script src="/js/auth.js" defer></script>
+  </head>
+  <body>
+    <main class="container auth-container">
+      <section class="panel auth-panel">
+        <p class="eyebrow">WELCOME BACK</p>
+        <h1>Sign in</h1>
+        <p class="muted">Access your personal expense dashboard.</p>
+
+        <p id="authMessage" class="message" role="status"></p>
+
+        <form id="loginForm">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autocomplete="username"
+          />
+
+          <label for="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autocomplete="current-password"
+          />
+
+          <button class="button primary full-width" type="submit">
+            Log in
+          </button>
+        </form>
+
+        <p>New here? <a href="/register.html">Create an account</a></p>
+      </section>
+    </main>
+  </body>
+</html>

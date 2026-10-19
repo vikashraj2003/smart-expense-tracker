@@ -1,4 +1,3 @@
-
 package smart_expense_tracker.entity;
 
 import jakarta.persistence.*;
@@ -22,14 +21,19 @@ public class Transaction {
     @Column(nullable = false, length = 3)
     private String currency;
 
-    @Column(nullable = false, length = 200)
+    @Column(nullable = false, length = 255)
     private String description;
 
     @Column(name = "transaction_date", nullable = false)
     private LocalDate transactionDate;
 
-    public Transaction() {
-    }
+    // Nullable during migration so older Phase 3 records are preserved.
+    // Every newly created transaction must have an owner.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private AppUser owner;
+
+    protected Transaction() {}
 
     public Transaction(
             String type,
@@ -44,46 +48,21 @@ public class Transaction {
         this.transactionDate = transactionDate;
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public String getType() { return type; }
+    public BigDecimal getAmount() { return amount; }
+    public String getCurrency() { return currency; }
+    public String getDescription() { return description; }
+    public LocalDate getTransactionDate() { return transactionDate; }
+    public AppUser getOwner() { return owner; }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
+    public void setOwner(AppUser owner) { this.owner = owner; }
+    public void setType(String type) { this.type = type; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public void setCurrency(String currency) { this.currency = currency; }
     public void setDescription(String description) {
         this.description = description;
     }
-
-    public LocalDate getTransactionDate() {
-        return transactionDate;
-    }
-
     public void setTransactionDate(LocalDate transactionDate) {
         this.transactionDate = transactionDate;
     }

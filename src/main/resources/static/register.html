@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Register | Smart Expense Tracker</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <script src="/js/api.js" defer></script>
+    <script src="/js/auth.js" defer></script>
+  </head>
+  <body>
+    <main class="container auth-container">
+      <section class="panel auth-panel">
+        <p class="eyebrow">CREATE YOUR ACCOUNT</p>
+        <h1>Smart Expense Tracker</h1>
+        <p class="muted">Create an account to track your finances.</p>
+
+        <p id="authMessage" class="message" role="status"></p>
+
+        <form id="registerForm">
+          <label for="name">Full name</label>
+          <input
+            id="name"
+            name="name"
+            required
+            maxlength="100"
+            autocomplete="name"
+          />
+
+          <label for="email">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            maxlength="254"
+            autocomplete="email"
+          />
+
+          <label for="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            minlength="12"
+            maxlength="72"
+            autocomplete="new-password"
+          />
+
+          <button class="button primary full-width" type="submit">
+            Create account
+          </button>
+        </form>
+
+        <p>Already registered? <a href="/login.html">Log in</a></p>
+      </section>
+    </main>
+  </body>
+</html>

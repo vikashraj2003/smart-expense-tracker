@@ -1,17 +1,18 @@
+
 package smart_expense_tracker.controller;
 
-import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 public class HealthController {
 
     @GetMapping("/api/v1/health")
-    public Map<String, String> checkHealth() {
+    public Map<String, String> health() {
         return Map.of(
-            "status", "UP",
-            "message", "Smart Expense Tracker API is running"
-        );
+                "status", "UP",
+                "application", "Smart Expense Tracker");
     }
 }

@@ -2,258 +2,143 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Smart Expense Tracker</title>
     <link rel="stylesheet" href="/css/style.css" />
+    <script src="/js/api.js" defer></script>
+    <script src="/js/dashboard.js" defer></script>
   </head>
   <body>
-    <main class="container">
-      <header class="page-header">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PERSONAL FINANCE</p>
         <h1>Smart Expense Tracker</h1>
-        <p>Track your income and expenses in one place.</p>
-      </header>
+      </div>
+      <button id="logoutButton" class="button secondary" type="button">
+        Log out
+      </button>
+    </header>
+
+    <main class="container">
+      <p id="message" class="message" role="status"></p>
+
+      <section class="summary-grid">
+        <article class="panel summary-card">
+          <p class="muted">Total income</p>
+          <h2 id="totalIncome">—</h2>
+        </article>
+        <article class="panel summary-card">
+          <p class="muted">Total expenses</p>
+          <h2 id="totalExpenses">—</h2>
+        </article>
+        <article class="panel summary-card">
+          <p class="muted">Net balance</p>
+          <h2 id="netBalance">—</h2>
+        </article>
+      </section>
 
       <section class="panel">
-        <h2 id="formTitle">Add Transaction</h2>
+        <h2>Add transaction</h2>
 
         <form id="transactionForm" class="transaction-form">
-          <div class="form-group">
-            <label for="type">Transaction Type</label>
+          <div>
+            <label for="type">Type</label>
             <select id="type" name="type" required>
               <option value="EXPENSE">Expense</option>
               <option value="INCOME">Income</option>
             </select>
           </div>
 
-          <div class="form-group">
-            <label for="amount">Amount (INR)</label>
+          <div>
+            <label for="amount">Amount</label>
             <input
-              type="number"
               id="amount"
               name="amount"
+              type="number"
               min="0.01"
               step="0.01"
-              placeholder="e.g. 250"
               required
             />
           </div>
 
-          <div class="form-group">
+          <div>
+            <label for="currency">Currency</label>
+            <select id="currency" name="currency" required>
+              <option value="INR">INR</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="transactionDate">Date</label>
+            <input
+              id="transactionDate"
+              name="transactionDate"
+              type="date"
+              required
+            />
+          </div>
+
+          <div class="full-span">
             <label for="description">Description</label>
             <input
-              type="text"
               id="description"
               name="description"
               maxlength="255"
-              placeholder="e.g. Groceries"
               required
             />
           </div>
 
-          <div class="form-group">
-            <label for="transactionDate">Date</label>
-            <input
-              type="date"
-              id="transactionDate"
-              name="transactionDate"
-              required
-            />
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" id="submitButton">Save Transaction</button>
-            <button
-              type="button"
-              id="cancelEditButton"
-              class="secondary-button"
-              hidden
-            >
-              Cancel Edit
-            </button>
-          </div>
+          <button class="button primary" type="submit">Save transaction</button>
         </form>
-
-        <p
-          id="formMessage"
-          class="message"
-          role="status"
-          aria-live="polite"
-        ></p>
       </section>
 
-      <section class="summary-section">
-        <h2>Transaction Summary</h2>
-
-        <div class="summary-cards">
-          <article class="summary-card">
-            <h3>Total Income</h3>
-            <p id="totalIncome">₹0.00</p>
-          </article>
-
-          <article class="summary-card">
-            <h3>Total Expenses</h3>
-            <p id="totalExpenses">₹0.00</p>
-          </article>
-
-          <article class="summary-card">
-            <h3>Balance</h3>
-            <p id="balance">₹0.00</p>
-          </article>
+      <section class="panel">
+        <div class="section-heading">
+          <h2>Transactions</h2>
+          <span id="transactionCount" class="muted">0 records</span>
         </div>
-      </section>
 
-      <section class="transactions-section">
-        <h2>Transactions</h2>
-
-        <button type="button" id="loadTransactions">
-          Refresh Transactions
-        </button>
-
-        <div class="transaction-filters">
+        <div class="filters">
           <input
+            id="searchInput"
             type="search"
-            id="searchTransactions"
-            placeholder="Search by description..."
-            aria-label="Search transactions by description"
+            placeholder="Search descriptions"
+            aria-label="Search transactions"
           />
 
-          <select id="filterType" aria-label="Filter by transaction type">
-            <option value="ALL">All Transactions</option>
-            <option value="EXPENSE">Expenses Only</option>
-            <option value="INCOME">Income Only</option>
+          <select id="typeFilter" aria-label="Filter by type">
+            <option value="ALL">All types</option>
+            <option value="INCOME">Income</option>
+            <option value="EXPENSE">Expense</option>
           </select>
 
-          <select id="sortOrder" aria-label="Sort transactions">
-            <option value="NEWEST">Newest First</option>
-            <option value="OLDEST">Oldest First</option>
-            <option value="AMOUNT_HIGH">Amount: High to Low</option>
-            <option value="AMOUNT_LOW">Amount: Low to High</option>
-          </select>
+          <button id="refreshButton" class="button secondary" type="button">
+            Refresh
+          </button>
         </div>
 
-        <p id="listMessage" class="message" role="status"></p>
-        <ul id="transactionList" class="transaction-list">
-          <li class="empty-state">Loading transactions...</li>
-        </ul>
+        <p id="loading" class="muted">Loading transactions...</p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transactionList"></tbody>
+          </table>
+        </div>
+
+        <p id="emptyMessage" class="muted" hidden>No transactions found.</p>
       </section>
     </main>
-
-    <script src="/js/api.js"></script>
-    <script src="/js/dashboard.js"></script>
   </body>
 </html>
-<!-- <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Smart Expense Tracker</title>
-    <link rel="stylesheet" href="/css/style.css" />
-  </head>
-  <body>
-    <h1>Smart Expense Tracker</h1>
-    <p>Track your income and expenses in one place.</p>
-
-    <h2>Add Transaction</h2>
-
-    <form id="transactionForm" class="transaction-form">
-      <div class="form-group">
-        <label for="type">Transaction Type</label>
-        <select id="type" name="type" required>
-          <option value="EXPENSE">Expense</option>
-          <option value="INCOME">Income</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="amount">Amount (INR)</label>
-        <input
-          type="number"
-          id="amount"
-          name="amount"
-          min="0.01"
-          step="0.01"
-          placeholder="e.g. 250"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="description">Description</label>
-        <input
-          type="text"
-          id="description"
-          name="description"
-          maxlength="255"
-          placeholder="e.g. Groceries"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="transactionDate">Date</label>
-        <input
-          type="date"
-          id="transactionDate"
-          name="transactionDate"
-          required
-        />
-      </div>
-
-      <button type="submit" id="submitButton">Save Transaction</button>
-      <button type="button" id="cancelEditButton" hidden>Cancel Edit</button>
-    </form>
-
-    <p id="formMessage" role="status"></p>
-
-    <h2>Transactions</h2>
-
-    <section class="summary-cards">
-      <div class="summary-card">
-        <h3>Total Income</h3>
-        <p id="totalIncome">₹0.00</p>
-      </div>
-
-      <div class="summary-card">
-        <h3>Total Expenses</h3>
-        <p id="totalExpenses">₹0.00</p>
-      </div>
-
-      <div class="summary-card">
-        <h3>Balance</h3>
-        <p id="balance">₹0.00</p>
-      </div>
-    </section>
-
-    <button id="loadTransactions" type="button">Load Transactions</button>
-
-    <div class="transaction-filters">
-      <input
-        type="search"
-        id="searchTransactions"
-        placeholder="Search by description..."
-        aria-label="Search transactions by description"
-      />
-
-      <select id="filterType" aria-label="Filter by transaction type">
-        <select id="sortOrder" aria-label="Sort transactions">
-          <option value="NEWEST">Newest First</option>
-          <option value="OLDEST">Oldest First</option>
-          <option value="AMOUNT_HIGH">Amount: High to Low</option>
-          <option value="AMOUNT_LOW">Amount: Low to High</option>
-        </select>
-
-        <option value="ALL">All Transactions</option>
-        <option value="EXPENSE">Expenses Only</option>
-        <option value="INCOME">Income Only</option>
-      </select>
-    </div>
-
-    <ul id="transactionList">
-      <li>Click "Load Transactions" to view your data.</li>
-    </ul>
-
-    <script src="/js/api.js"></script>
-    <script src="/js/dashboard.js"></script>
-  </body>
-</html> -->
